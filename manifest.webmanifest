@@ -1,0 +1,19 @@
+{
+  "name": "Ricettario antireflusso",
+  "short_name": "Ricettario",
+  "description": "Ricette, menu settimanale e lista della spesa, disponibili offline.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f2",
+  "theme_color": "#315d4a",
+  "lang": "it",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#315d4a">
+  <meta name="description" content="Ricettario antireflusso offline con menu settimanale e lista della spesa.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <title>Ricettario antireflusso</title>
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">PWA offline</p>
+      <h1>Ricettario antireflusso</h1>
+      <p class="subtitle">Ricette, menu settimanale e lista della spesa.</p>
+    </div>
+    <button id="installBtn" class="secondary hidden">Installa app</button>
+  </header>
+
+  <main>
+    <section class="settings-card">
+      <div>
+        <label for="bookMode">Ricettario attivo</label>
+        <select id="bookMode">
+          <option value="adapted">Versione adattata</option>
+          <option value="original">Versione originale</option>
+        </select>
+      </div>
+      <div>
+        <label for="portions">Persone</label>
+        <select id="portions">
+          <option value="1">1 persona</option>
+          <option value="2">2 persone</option>
+          <option value="3">3 persone</option>
+          <option value="4">4 persone</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Database ricette</label>
+        <div class="db-status">
+          <strong id="dbVersion">Versione locale: —</strong>
+          <span id="dbUpdatedAt" class="muted"></span>
+        </div>
+        <button id="checkUpdatesBtn" class="secondary">Controlla aggiornamenti</button>
+      </div>
+      <div id="updateMessage" class="warning hidden"></div>
+
+      <div class="warning hidden" id="originalWarning">
+        Il ricettario originale può contenere alimenti incompatibili con le indicazioni del gastroenterologo.
+      </div>
+    </section>
+
+    <nav class="tabs" aria-label="Sezioni">
+      <button class="tab active" data-tab="week">Settimana</button>
+      <button class="tab" data-tab="shopping">Spesa</button>
+      <button class="tab" data-tab="recipes">Ricette</button>
+      <button class="tab" data-tab="favorites">Preferiti</button>
+    </nav>
+
+    <section id="week" class="panel active">
+      <div class="section-head">
+        <div>
+          <h2>Menu della settimana</h2>
+          <p id="weekLabel"></p>
+        </div>
+        <button id="regenerateBtn">Rigenera</button>
+      </div>
+      <div id="weekGrid" class="week-grid"></div>
+    </section>
+
+    <section id="shopping" class="panel">
+      <div class="section-head">
+        <div>
+          <h2>Lista della spesa</h2>
+          <p>Generata dal menu settimanale attuale.</p>
+        </div>
+        <button id="shareShoppingBtn" class="secondary">Condividi</button>
+      </div>
+      <div class="shopping-actions">
+        <button id="checkAllBtn" class="secondary">Segna tutto</button>
+        <button id="clearChecksBtn" class="secondary">Azzera spunte</button>
+      </div>
+      <div id="shoppingList" class="shopping-list"></div>
+    </section>
+
+    <section id="recipes" class="panel">
+      <div class="section-head">
+        <div>
+          <h2>Cerca ricette</h2>
+          <p>Scrivi uno o più ingredienti, separati da virgole.</p>
+        </div>
+      </div>
+      <div class="filters">
+        <input id="ingredientSearch" type="search" placeholder="Es. zucchine, pollo">
+        <select id="mealFilter">
+          <option value="">Tutti i pasti</option>
+          <option value="pranzo">Pranzo</option>
+          <option value="cena">Cena</option>
+          <option value="colazione">Colazione</option>
+          <option value="spuntino">Spuntino</option>
+        </select>
+        <select id="categoryFilter">
+          <option value="">Tutte le categorie</option>
+        </select>
+        <label class="checkline">
+          <input id="compatibleOnly" type="checkbox" checked>
+          Solo ricette compatibili
+        </label>
+      </div>
+      <p id="resultCount" class="muted"></p>
+      <div id="recipeResults" class="recipe-grid"></div>
+    </section>
+
+    <section id="favorites" class="panel">
+      <div class="section-head">
+        <div>
+          <h2>Preferiti</h2>
+          <p>Salvati sul dispositivo.</p>
+        </div>
+      </div>
+      <div id="favoriteResults" class="recipe-grid"></div>
+    </section>
+  </main>
+
+  <dialog id="recipeDialog">
+    <button id="closeDialog" class="dialog-close" aria-label="Chiudi">×</button>
+    <div id="recipeDetail"></div>
+  </dialog>
+
+  <footer>
+    <p>Le indicazioni del gastroenterologo prevalgono sempre sul ricettario originale.</p>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+
+:root {
+  color-scheme: light;
+  --bg: #f4f6f2;
+  --surface: #ffffff;
+  --text: #17231d;
+  --muted: #65736b;
+  --primary: #315d4a;
+  --primary-strong: #244737;
+  --accent: #dfeae3;
+  --border: #d8dfda;
+  --danger-bg: #fff2dc;
+  --danger-text: #6e4811;
+  --shadow: 0 10px 28px rgba(28, 49, 39, .08);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+button, input, select { font: inherit; }
+button {
+  border: 0;
+  border-radius: 12px;
+  padding: .72rem 1rem;
+  background: var(--primary);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+button.secondary {
+  background: var(--accent);
+  color: var(--primary-strong);
+}
+button:hover { filter: brightness(.97); }
+.hidden { display: none !important; }
+.app-header {
+  background: linear-gradient(135deg, var(--primary-strong), var(--primary));
+  color: white;
+  padding: calc(1.4rem + env(safe-area-inset-top)) 1rem 1.4rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+}
+.app-header h1 { margin: 0; font-size: clamp(1.7rem, 5vw, 2.6rem); }
+.eyebrow { margin: 0 0 .25rem; text-transform: uppercase; letter-spacing: .12em; font-size: .75rem; opacity: .75; }
+.subtitle { margin: .35rem 0 0; opacity: .88; }
+main { width: min(1180px, 100%); margin: 0 auto; padding: 1rem; }
+.settings-card {
+  margin-top: -1.1rem;
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .8rem;
+}
+.settings-card label { display: block; font-weight: 700; margin-bottom: .35rem; }
+select, input[type="search"] {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: white;
+  color: var(--text);
+  padding: .78rem .85rem;
+}
+.warning {
+  grid-column: 1 / -1;
+  padding: .8rem;
+  border-radius: 12px;
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  font-weight: 650;
+}
+.tabs {
+  display: flex;
+  gap: .45rem;
+  overflow-x: auto;
+  padding: 1rem 0 .6rem;
+}
+.tab {
+  flex: 0 0 auto;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+.panel { display: none; }
+.panel.active { display: block; }
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+  margin: .5rem 0 1rem;
+}
+.section-head h2 { margin: 0; }
+.section-head p { margin: .35rem 0 0; color: var(--muted); }
+.week-grid {
+  display: grid;
+  gap: .8rem;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+}
+.day-card, .recipe-card, .shopping-group {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+.day-card { padding: 1rem; }
+.day-card h3 { margin: 0 0 .8rem; }
+.meal {
+  border-top: 1px solid var(--border);
+  padding: .8rem 0;
+}
+.meal:first-of-type { border-top: 0; padding-top: 0; }
+.meal-label {
+  font-size: .75rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 800;
+}
+.meal-title { margin: .28rem 0 .55rem; font-weight: 750; line-height: 1.3; }
+.meal-actions { display: flex; gap: .4rem; flex-wrap: wrap; }
+.meal-actions button { padding: .5rem .65rem; font-size: .88rem; }
+.filters {
+  display: grid;
+  grid-template-columns: 2fr repeat(2, 1fr);
+  gap: .7rem;
+  align-items: center;
+}
+.checkline {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  color: var(--muted);
+}
+.muted { color: var(--muted); }
+.recipe-grid {
+  display: grid;
+  gap: .8rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.recipe-card { padding: 1rem; }
+.recipe-card h3 { margin: 0; line-height: 1.3; }
+.recipe-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  margin: .7rem 0;
+}
+.badge {
+  background: var(--accent);
+  color: var(--primary-strong);
+  border-radius: 999px;
+  padding: .28rem .55rem;
+  font-size: .75rem;
+  font-weight: 750;
+}
+.badge.warn { background: var(--danger-bg); color: var(--danger-text); }
+.recipe-actions { display: flex; justify-content: space-between; gap: .5rem; }
+.favorite-btn { background: transparent; color: var(--primary); border: 1px solid var(--border); }
+.favorite-btn.active { background: var(--accent); }
+.shopping-actions { display: flex; gap: .5rem; margin-bottom: .8rem; }
+.shopping-list { display: grid; gap: .8rem; }
+.shopping-group { padding: 1rem; }
+.shopping-group h3 { margin: 0 0 .6rem; }
+.shopping-item {
+  display: flex;
+  align-items: flex-start;
+  gap: .7rem;
+  padding: .48rem 0;
+  border-top: 1px solid var(--border);
+}
+.shopping-item:first-of-type { border-top: 0; }
+.shopping-item.checked span { text-decoration: line-through; color: var(--muted); }
+dialog {
+  width: min(760px, calc(100% - 1rem));
+  max-height: 90vh;
+  border: 0;
+  border-radius: 18px;
+  padding: 0;
+  box-shadow: 0 20px 80px rgba(0,0,0,.25);
+}
+dialog::backdrop { background: rgba(16, 27, 21, .55); }
+#recipeDetail { padding: 1.2rem; overflow: auto; max-height: 90vh; }
+.dialog-close {
+  position: sticky;
+  float: right;
+  top: .5rem;
+  margin: .5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border-radius: 50%;
+  z-index: 2;
+}
+.detail-title { padding-right: 3rem; }
+.detail-section { margin-top: 1.2rem; }
+.detail-section h3 { margin-bottom: .45rem; }
+.detail-section li { margin-bottom: .45rem; line-height: 1.45; }
+.change {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border-radius: 10px;
+  padding: .65rem;
+  margin: .5rem 0;
+}
+footer {
+  color: var(--muted);
+  text-align: center;
+  padding: 1.5rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
+  font-size: .88rem;
+}
+@media (max-width: 720px) {
+  .app-header { align-items: start; flex-direction: column; }
+  .settings-card, .filters { grid-template-columns: 1fr; }
+  .section-head { align-items: stretch; }
+  .section-head button { align-self: start; }
+}
+
+.db-status { display:flex; flex-direction:column; gap:.18rem; margin-bottom:.55rem; }
+#updateMessage { grid-column:1 / -1; }
