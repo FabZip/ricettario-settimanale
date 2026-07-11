@@ -1,0 +1,48 @@
+name: Pubblica PWA da ZIP
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - app.zip
+      - .github/workflows/deploy.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Scarica repository
+        uses: actions/checkout@v4
+
+      - name: Estrai la PWA
+        run: |
+          rm -rf site
+          mkdir -p site
+          unzip -o app.zip -d site
+
+      - name: Configura GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Carica il sito
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Pubblica
+        id: deployment
+        uses: actions/deploy-pages@v4
