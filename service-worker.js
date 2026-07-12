@@ -1,7 +1,7 @@
-const CACHE = "ricettario-antireflusso-v6";
+const CACHE = "ricettario-antireflusso-v7";
 const ASSETS = [
   "./", "./index.html", "./styles.css", "./app.js",
-  "./manifest.webmanifest", "./icons/icon.svg", "./data/recipes.json", "./app-version.json"
+  "./manifest.webmanifest", "./icons/icon.svg", "./data/recipes.json", "./app-version.json", "./status.json"
 ];
 
 self.addEventListener("install", event => {
@@ -20,7 +20,7 @@ self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
 
-  if (url.pathname.includes("/database/")) {
+  if (url.pathname.includes("/database/") || url.pathname.endsWith("/status.json")) {
     event.respondWith(fetch(event.request, {cache:"no-store"}));
     return;
   }

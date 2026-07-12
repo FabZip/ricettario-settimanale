@@ -1,8 +1,9 @@
 {
-  "app_version": "1.1.1",
-  "cache_version": "v6",
-  "updated_at": "2026-07-12T16:15:00+02:00",
+  "app_version": "1.2.0",
+  "cache_version": "v7",
+  "updated_at": "2026-07-12T16:45:00+02:00",
   "changes": [
+    "Aggiunto confronto tra versioni locali e remote tramite status.json.",
     "La descrizione originale viene condivisa e copiata solo in modalità originale.",
     "Versione applicazione visibile nel footer.",
     "Finestra informazioni con versione app, database e cache.",

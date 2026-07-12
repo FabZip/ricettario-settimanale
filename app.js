@@ -10,9 +10,11 @@ const state = {
 
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
-const APP_VERSION = "1.1.1";
-const APP_CACHE_VERSION = "v6";
+const APP_VERSION = "1.2.0";
+const APP_CACHE_VERSION = "v7";
 let currentDatabaseMeta = {version: 0, updated_at: null};
+let remoteStatus = null;
+let remoteStatusCheckedAt = null;
 let versionBadgeTapCount = 0;
 let versionBadgeTapTimer = null;
 
@@ -595,11 +597,40 @@ function renderDatabaseStatus(meta = {}) {
   renderVersionInformation();
 }
 
+function compareVersions(localVersion, remoteVersion) {
+  const local = String(localVersion || "0").split(".").map(Number);
+  const remote = String(remoteVersion || "0").split(".").map(Number);
+  const length = Math.max(local.length, remote.length);
+
+  for (let i = 0; i < length; i += 1) {
+    const a = local[i] || 0;
+    const b = remote[i] || 0;
+    if (a < b) return -1;
+    if (a > b) return 1;
+  }
+  return 0;
+}
+
+function getUpdateState() {
+  const localDb = Number(currentDatabaseMeta.version || 0);
+  const remoteDb = Number(remoteStatus?.database?.version || 0);
+  const remoteApp = remoteStatus?.app?.version || null;
+
+  return {
+    appAvailable: Boolean(remoteApp) && compareVersions(APP_VERSION, remoteApp) < 0,
+    dbAvailable: remoteDb > localDb,
+    remoteApp,
+    remoteDb
+  };
+}
+
 function renderVersionInformation(statusText = "Pronto") {
   const dbVersion = currentDatabaseMeta.version ?? 0;
   const updatedText = currentDatabaseMeta.updated_at
     ? new Date(currentDatabaseMeta.updated_at).toLocaleString("it-IT")
     : "Database iniziale incluso";
+
+  const updates = getUpdateState();
 
   $("appVersionBadge").textContent = `App ${APP_VERSION} · DB ${dbVersion}`;
   $("infoAppVersion").textContent = APP_VERSION;
@@ -607,6 +638,17 @@ function renderVersionInformation(statusText = "Pronto") {
   $("infoCacheVersion").textContent = APP_CACHE_VERSION;
   $("infoDbUpdatedAt").textContent = updatedText;
   $("infoUpdateStatus").textContent = statusText;
+
+  $("infoRemoteAppVersion").textContent = updates.remoteApp || (navigator.onLine ? "Non verificata" : "Offline");
+  $("infoRemoteDbVersion").textContent = remoteStatus?.database?.version ?? (navigator.onLine ? "Non verificata" : "Offline");
+
+  $("infoRemoteAppVersion").className = updates.appAvailable ? "version-new" : "version-current";
+  $("infoRemoteDbVersion").className = updates.dbAvailable ? "version-new" : "version-current";
+
+  $("updateRemoteAppBtn").classList.toggle("hidden", !updates.appAvailable);
+  $("updateRemoteDbBtn").classList.toggle("hidden", !updates.dbAvailable);
+
+  renderUpdateBanner();
 }
 
 function showUpdateMessage(message, error = false) {
@@ -625,6 +667,88 @@ async function fetchRemoteJson(url) {
   });
   if (!response.ok) throw new Error(`Errore HTTP ${response.status}`);
   return response.json();
+}
+
+async function fetchRemoteStatus({silent = false} = {}) {
+  if (!navigator.onLine) {
+    if (!silent) renderVersionInformation("Offline");
+    return null;
+  }
+
+  try {
+    remoteStatus = await fetchRemoteJson("./status.json");
+    remoteStatusCheckedAt = new Date();
+    renderVersionInformation("Versioni remote verificate");
+
+    if (remoteStatus.maintenance && remoteStatus.message) {
+      showUpdateMessage(remoteStatus.message, true);
+    }
+
+    return remoteStatus;
+  } catch (error) {
+    if (!silent) {
+      showUpdateMessage(`Impossibile verificare le versioni remote: ${error.message}`, true);
+      renderVersionInformation("Controllo remoto non riuscito");
+    }
+    return null;
+  }
+}
+
+function renderUpdateBanner() {
+  const banner = $("updateBanner");
+  if (!banner) return;
+
+  const updates = getUpdateState();
+  const messages = [];
+
+  if (updates.appAvailable) {
+    messages.push(`App ${APP_VERSION} → ${updates.remoteApp}`);
+  }
+  if (updates.dbAvailable) {
+    messages.push(`Database ${currentDatabaseMeta.version || 0} → ${updates.remoteDb}`);
+  }
+
+  if (!messages.length) {
+    banner.classList.add("hidden");
+    return;
+  }
+
+  $("updateBannerTitle").textContent = "Aggiornamento disponibile";
+  $("updateBannerText").textContent = messages.join(" · ");
+  $("updateBannerAppBtn").classList.toggle("hidden", !updates.appAvailable);
+  $("updateBannerDbBtn").classList.toggle("hidden", !updates.dbAvailable);
+  banner.classList.remove("hidden");
+}
+
+async function updateApplicationFromRemote() {
+  $("infoUpdateStatus").textContent = "Aggiornamento app in corso…";
+
+  try {
+    if ("serviceWorker" in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(registration => registration.update()));
+    }
+
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(key => caches.delete(key)));
+    }
+
+    window.location.reload();
+  } catch (error) {
+    $("infoUpdateStatus").textContent = "Aggiornamento app non riuscito";
+  }
+}
+
+async function checkAllRemoteVersions({silent = false} = {}) {
+  const status = await fetchRemoteStatus({silent});
+  if (!status) return;
+
+  const updates = getUpdateState();
+  if (!silent && !updates.appAvailable && !updates.dbAvailable) {
+    showUpdateMessage("App e database sono aggiornati.");
+    renderVersionInformation("Tutto aggiornato");
+  }
 }
 
 async function checkDatabaseUpdates({silent=false, force=false} = {}) {
@@ -778,9 +902,13 @@ async function init() {
   });
   $("infoCheckUpdatesBtn").addEventListener("click", async () => {
     $("infoUpdateStatus").textContent = "Controllo aggiornamenti…";
-    await checkDatabaseUpdates({force:true});
+    await checkAllRemoteVersions({silent:false});
   });
-  $("forceAppRefreshBtn").addEventListener("click", forceApplicationRefresh);
+  $("updateRemoteAppBtn").addEventListener("click", updateApplicationFromRemote);
+  $("updateRemoteDbBtn").addEventListener("click", () => checkDatabaseUpdates({force:true}));
+  $("updateBannerAppBtn").addEventListener("click", updateApplicationFromRemote);
+  $("updateBannerDbBtn").addEventListener("click", () => checkDatabaseUpdates({force:true}));
+  $("dismissUpdateBannerBtn").addEventListener("click", () => $("updateBanner").classList.add("hidden"));
   $("clearAppCacheBtn").addEventListener("click", clearApplicationCache);
   $("clearSavedMenuBtn").addEventListener("click", clearSavedMenus);
   $("ingredientSearch").addEventListener("input", renderRecipeResults);
@@ -815,6 +943,7 @@ async function init() {
     navigator.serviceWorker.register("service-worker.js");
   }
 
+  checkAllRemoteVersions({silent:true});
   checkDatabaseUpdates({silent:true});
 }
 

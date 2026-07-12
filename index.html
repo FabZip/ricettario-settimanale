@@ -20,6 +20,18 @@
     <button id="installBtn" class="secondary hidden">Installa app</button>
   </header>
 
+  <section id="updateBanner" class="update-banner hidden" aria-live="polite">
+    <div>
+      <strong id="updateBannerTitle">Aggiornamento disponibile</strong>
+      <p id="updateBannerText"></p>
+    </div>
+    <div class="update-banner-actions">
+      <button id="updateBannerAppBtn" class="hidden">Aggiorna app</button>
+      <button id="updateBannerDbBtn" class="hidden">Aggiorna database</button>
+      <button id="dismissUpdateBannerBtn" class="secondary">Chiudi</button>
+    </div>
+  </section>
+
   <main>
     <section class="settings-card">
       <div>
@@ -147,16 +159,24 @@
 
       <dl class="version-list">
         <div>
-          <dt>Versione app</dt>
-          <dd id="infoAppVersion">1.1.0</dd>
+          <dt>Versione app locale</dt>
+          <dd id="infoAppVersion">1.2.0</dd>
         </div>
         <div>
-          <dt>Versione database</dt>
+          <dt>Versione app remota</dt>
+          <dd id="infoRemoteAppVersion">—</dd>
+        </div>
+        <div>
+          <dt>Versione database locale</dt>
           <dd id="infoDbVersion">—</dd>
         </div>
         <div>
+          <dt>Versione database remota</dt>
+          <dd id="infoRemoteDbVersion">—</dd>
+        </div>
+        <div>
           <dt>Cache</dt>
-          <dd id="infoCacheVersion">v5</dd>
+          <dd id="infoCacheVersion">v7</dd>
         </div>
         <div>
           <dt>Ultimo aggiornamento database</dt>
@@ -170,7 +190,8 @@
 
       <div class="version-actions">
         <button id="infoCheckUpdatesBtn">Controlla aggiornamenti</button>
-        <button id="forceAppRefreshBtn" class="secondary">Aggiorna l'app</button>
+        <button id="updateRemoteAppBtn" class="secondary hidden">Aggiorna app</button>
+        <button id="updateRemoteDbBtn" class="secondary hidden">Aggiorna database</button>
       </div>
 
       <details id="developerPanel" class="developer-panel">

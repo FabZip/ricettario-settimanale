@@ -310,3 +310,38 @@ footer {
 .developer-actions {
   margin-top: .75rem;
 }
+
+.update-banner {
+  width: min(1180px, calc(100% - 2rem));
+  margin: .8rem auto 0;
+  padding: .9rem 1rem;
+  border-radius: 16px;
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border: 1px solid rgba(110,72,17,.18);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: var(--shadow);
+}
+.update-banner p {
+  margin: .25rem 0 0;
+}
+.update-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.version-new {
+  color: #9a5b00;
+}
+.version-current {
+  color: var(--primary);
+}
+@media (max-width: 720px) {
+  .update-banner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
