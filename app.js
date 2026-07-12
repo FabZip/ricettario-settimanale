@@ -64,12 +64,31 @@ function recipeProcedure(r) {
   return state.mode === "adapted" ? r.procedimento_adattato : r.procedimento_originale;
 }
 
+function isRecipeAllowedForCurrentMode(recipe) {
+  if (!recipe) return false;
+
+  // In modalità adattata le ricette dichiarate non compatibili
+  // non devono mai entrare nel menu settimanale.
+  if (state.mode === "adapted" && recipe.compatibilita === "non_compatibile") {
+    return false;
+  }
+
+  return true;
+}
+
 function eligibleRecipes(meal) {
-  return state.recipes.filter(r => {
-    if (!r.pasti.includes(meal)) return false;
-    if (r.categoria === "Contorni") return false;
-    if (state.mode === "adapted" && r.compatibilita === "non_compatibile") return false;
-    if (meal === "cena" && !["Secondi piatti", "Primi piatti"].includes(r.categoria)) return false;
+  return state.recipes.filter(recipe => {
+    if (!isRecipeAllowedForCurrentMode(recipe)) return false;
+    if (!Array.isArray(recipe.pasti) || !recipe.pasti.includes(meal)) return false;
+    if (recipe.categoria === "Contorni") return false;
+
+    if (
+      meal === "cena" &&
+      !["Secondi piatti", "Primi piatti"].includes(recipe.categoria)
+    ) {
+      return false;
+    }
+
     return true;
   });
 }
@@ -105,6 +124,16 @@ function generateMenu(force = false) {
     lunch: pick(lunches),
     dinner: pick(dinners)
   }));
+
+  // Controllo difensivo: elimina eventuali ricette non compatibili
+  // provenienti da vecchi menu salvati o database precedenti.
+  if (state.mode === "adapted") {
+    state.menu = state.menu.map(entry => ({
+      ...entry,
+      lunch: isRecipeAllowedForCurrentMode(entry.lunch) ? entry.lunch : null,
+      dinner: isRecipeAllowedForCurrentMode(entry.dinner) ? entry.dinner : null
+    }));
+  }
 
   localStorage.setItem(`menu:${key}`, JSON.stringify(state.menu));
   renderMenu();
@@ -354,8 +383,102 @@ function openRecipe(id) {
       <h3>Procedimento</h3>
       <ol>${procedure.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ol>
     </section>
+    <section class="detail-section recipe-share-actions">
+      <button id="shareRecipeBtn">Condividi ricetta</button>
+      <button id="copyRecipeBtn" class="secondary">Copia ricetta</button>
+      <p id="recipeActionMessage" class="muted" aria-live="polite"></p>
+    </section>
   `;
+
   $("recipeDialog").showModal();
+
+  $("shareRecipeBtn").addEventListener("click", () => shareRecipe(r));
+  $("copyRecipeBtn").addEventListener("click", () => copyRecipe(r));
+}
+
+function buildRecipeShareText(recipe) {
+  const factor = state.portions / Math.max(recipe.porzioni || 2, 1);
+  const ingredients = recipeIngredients(recipe).map(x => scaleIngredient(x, factor));
+  const procedure = recipeProcedure(recipe);
+
+  const parts = [
+    recipeTitle(recipe),
+    "",
+    `Categoria: ${recipe.categoria}`,
+    `Tempo: ${recipe.tempo} minuti`,
+    `Persone: ${state.portions}`,
+    ""
+  ];
+
+  if (state.mode === "adapted" && Array.isArray(recipe.modifiche) && recipe.modifiche.length) {
+    parts.push("Variazioni rispetto all'originale:");
+    recipe.modifiche.forEach(change => {
+      parts.push(`- ${change.da} → ${change.a}`);
+      if (change.motivazione) parts.push(`  ${change.motivazione}`);
+    });
+    parts.push("");
+  }
+
+  parts.push("Ingredienti:");
+  ingredients.forEach(item => parts.push(`- ${item}`));
+  parts.push("");
+  parts.push("Procedimento:");
+  procedure.forEach((step, index) => parts.push(`${index + 1}. ${step}`));
+
+  return parts.join("\n");
+}
+
+async function shareRecipe(recipe) {
+  const text = buildRecipeShareText(recipe);
+  const message = $("recipeActionMessage");
+
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: recipeTitle(recipe),
+        text
+      });
+      message.textContent = "Ricetta condivisa.";
+      return;
+    }
+
+    await navigator.clipboard.writeText(text);
+    message.textContent = "Condivisione non disponibile: ricetta copiata negli appunti.";
+  } catch (error) {
+    if (error && error.name === "AbortError") return;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      message.textContent = "Ricetta copiata negli appunti.";
+    } catch (_) {
+      message.textContent = "Non è stato possibile condividere o copiare la ricetta.";
+    }
+  }
+}
+
+async function copyRecipe(recipe) {
+  const text = buildRecipeShareText(recipe);
+  const message = $("recipeActionMessage");
+
+  try {
+    await navigator.clipboard.writeText(text);
+    message.textContent = "Ricetta copiata negli appunti.";
+  } catch (_) {
+    // Fallback per browser che non supportano Clipboard API.
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+
+    const copied = document.execCommand("copy");
+    document.body.removeChild(area);
+    message.textContent = copied
+      ? "Ricetta copiata negli appunti."
+      : "Non è stato possibile copiare la ricetta.";
+  }
 }
 
 function shareShopping() {

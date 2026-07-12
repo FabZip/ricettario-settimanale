@@ -1,4 +1,4 @@
-const CACHE = "ricettario-antireflusso-v2";
+const CACHE = "ricettario-antireflusso-v4";
 const ASSETS = [
   "./", "./index.html", "./styles.css", "./app.js",
   "./manifest.webmanifest", "./icons/icon.svg", "./data/recipes.json"

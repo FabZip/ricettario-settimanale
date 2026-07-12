@@ -229,3 +229,14 @@ footer {
 
 .db-status { display:flex; flex-direction:column; gap:.18rem; margin-bottom:.55rem; }
 #updateMessage { grid-column:1 / -1; }
+
+.recipe-share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+  align-items: center;
+}
+.recipe-share-actions p {
+  flex-basis: 100%;
+  margin: .1rem 0 0;
+}
