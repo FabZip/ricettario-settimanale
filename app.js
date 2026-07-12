@@ -10,8 +10,8 @@ const state = {
 
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
-const APP_VERSION = "1.2.0";
-const APP_CACHE_VERSION = "v7";
+const APP_VERSION = "1.2.1";
+const APP_CACHE_VERSION = "v8";
 let currentDatabaseMeta = {version: 0, updated_at: null};
 let remoteStatus = null;
 let remoteStatusCheckedAt = null;
@@ -676,7 +676,35 @@ async function fetchRemoteStatus({silent = false} = {}) {
   }
 
   try {
-    remoteStatus = await fetchRemoteJson("./status.json");
+    const [statusResult, databaseResult] = await Promise.allSettled([
+      fetchRemoteJson("./status.json"),
+      fetchRemoteJson("./database/version.json")
+    ]);
+
+    if (statusResult.status !== "fulfilled" && databaseResult.status !== "fulfilled") {
+      throw new Error("File delle versioni remote non disponibili");
+    }
+
+    remoteStatus = statusResult.status === "fulfilled"
+      ? statusResult.value
+      : {
+          app: {version: APP_VERSION, updated_at: null},
+          database: {version: 0, updated_at: null},
+          maintenance: false,
+          message: ""
+        };
+
+    // database/version.json è la fonte autorevole per il database.
+    // In questo modo un valore errato o non aggiornato in status.json
+    // non genera falsi avvisi.
+    if (databaseResult.status === "fulfilled") {
+      remoteStatus.database = {
+        ...remoteStatus.database,
+        version: Number(databaseResult.value.version || 0),
+        updated_at: databaseResult.value.updated_at || null
+      };
+    }
+
     remoteStatusCheckedAt = new Date();
     renderVersionInformation("Versioni remote verificate");
 
@@ -905,9 +933,9 @@ async function init() {
     await checkAllRemoteVersions({silent:false});
   });
   $("updateRemoteAppBtn").addEventListener("click", updateApplicationFromRemote);
-  $("updateRemoteDbBtn").addEventListener("click", () => checkDatabaseUpdates({force:true}));
+  $("updateRemoteDbBtn").addEventListener("click", () => checkDatabaseUpdates({force:false}));
   $("updateBannerAppBtn").addEventListener("click", updateApplicationFromRemote);
-  $("updateBannerDbBtn").addEventListener("click", () => checkDatabaseUpdates({force:true}));
+  $("updateBannerDbBtn").addEventListener("click", () => checkDatabaseUpdates({force:false}));
   $("dismissUpdateBannerBtn").addEventListener("click", () => $("updateBanner").classList.add("hidden"));
   $("clearAppCacheBtn").addEventListener("click", clearApplicationCache);
   $("clearSavedMenuBtn").addEventListener("click", clearSavedMenus);
