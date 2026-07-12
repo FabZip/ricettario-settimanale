@@ -1374,35 +1374,34 @@
       "1 . Prepara un brodo leggero facendo bollire carota e sedano in acqua non salata per 20 minuti, poi filtralo",
       "2 . Grattugia una zucchina e taglia l'altra a piccoli cubetti.",
       "3 . Frulla la zucchina grattugiata con un cucchiaio di brodo fino a ottenere una crema liscia",
-      "4 . Tosta il riso a secco in una pentola dal fondo spesso per un minuto",
-      "senza aggiungere grassi",
-      "Aggiungi il brodo poco alla volta, mescolando spesso. A metà",
-      "cottura unisci i cubetti di zucchina",
-      "Pochi minuti prima del termine, incorpora la crema di zucchine ei",
-      "fiori di zucca puliti e spezzettati",
-      "Spegni il fuoco quando il riso é ben cotto e cremoso. Completa con",
-      "lolio EVO a crudo e servi tiepido"
+      "4 . Tosta il riso a secco in una pentola dal fondo spesso per un minuto senza aggiungere grassi",
+      "5 . Aggiungi il brodo poco alla volta, mescolando spesso.",
+      "6 . A metà cottura unisci i cubetti di zucchina",
+      "7 . Pochi minuti prima del termine, incorpora la crema di zucchine e i fiori di zucca puliti e spezzettati",
+      "8 . Spegni il fuoco quando il riso é ben cotto e cremoso.",
+      "9 . Completa con l'olio EVO a crudo e servi tiepido"
     ],
     "procedimento_adattato": [
-      "Prima di iniziare, applica tutte le sostituzioni indicate nella sezione modifiche e usa solo gli ingredienti adattati.",
-      "w ~ w",
-      "Prepara un brodo leggero facendo bollire carota e sedano in acqua",
-      "non salata per 20 minuti, poi filtralo",
-      "Grattugia una zucchina e taglia l'altra a piccoli cubetti. Frulla la",
-      "zucchina grattugiata con un cucchiaio di brodo fino a ottenere una",
-      "crema liscia",
-      "Tosta il riso a secco in una pentola dal fondo spesso per un minuto",
-      "senza aggiungere grassi",
-      "Aggiungi il brodo poco alla volta, mescolando spesso. A metà",
-      "cottura unisci i cubetti di zucchina",
-      "Pochi minuti prima del termine, incorpora la crema di zucchine ei",
-      "fiori di zucca puliti e spezzettati",
-      "Spegni il fuoco quando il riso é ben cotto e cremoso. Completa con",
-      "lolio EVO a crudo e servi tiepido"
+      "1 . Prepara un brodo leggero facendo bollire carota e sedano in acqua non salata per 20 minuti, poi filtralo",
+      "2 . Grattugia una zucchina e taglia l'altra a piccoli cubetti.",
+      "3 . Frulla la zucchina grattugiata con un cucchiaio di brodo fino a ottenere una crema liscia",
+      "4 . Tosta il riso a secco in una pentola dal fondo spesso per un minuto senza aggiungere grassi",
+      "5 . Aggiungi il brodo poco alla volta, mescolando spesso.",
+      "6 . A metà cottura unisci i cubetti di zucchina",
+      "7 . Pochi minuti prima del termine, incorpora la crema di zucchine e i fiori di zucca puliti e spezzettati",
+      "8 . Spegni il fuoco quando il riso é ben cotto e cremoso.",
+      "9 . Completa con l'olio EVO a crudo e servi tiepido"
     ],
     "compatibilita": "compatibile_con_modifiche",
-    "modifiche": [],
-    "tempo": 20,
+    "modifiche": [
+      {
+        "regola": "SUB003",
+        "da": "80g di riso semintegrale",
+        "a": "80g di riso non integrale",
+        "motivazione": "I prodotti integrali e di segale/farro non sono consentiti."
+      }
+    ],
+    "tempo": 25,
     "difficolta": "media",
     "porzioni": 1,
     "leggerezza": 4,
@@ -1420,7 +1419,8 @@
     "titolo_adattato": "Riso basmati al vapore con zafferano e piselli decorticati",
     "categoria": "Primi piatti",
     "pasti": [
-      "pranzo"
+      "pranzo",
+      "cena"
     ],
     "descrizione_originale": "Il riso basmati é noto per il suo basso indice glicemico e la sua delicatezza. In questa ricetta utilizziamo la tecnica della cottura per assorbimento, che preserva i nutrienti. L'uso di piselli decorticati é fondamentale per evitare fermentazioni e gonfiori, garantendo un apporto proteico leggero e un benessere naturale immediato.",
     "ingredienti_originali": [

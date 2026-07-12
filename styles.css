@@ -240,3 +240,73 @@ footer {
   flex-basis: 100%;
   margin: .1rem 0 0;
 }
+
+.version-badge {
+  margin-top: .35rem;
+  padding: .28rem .55rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 650;
+  opacity: .82;
+}
+.version-badge:hover,
+.version-badge:focus-visible {
+  background: var(--accent);
+  color: var(--primary-strong);
+  opacity: 1;
+}
+.version-dialog {
+  width: min(520px, calc(100% - 1rem));
+}
+.version-dialog-content {
+  padding: 1.25rem;
+}
+.version-eyebrow {
+  color: var(--muted);
+}
+.version-dialog h2 {
+  margin-top: .15rem;
+  padding-right: 3rem;
+}
+.version-list {
+  margin: 1rem 0;
+  display: grid;
+  gap: .15rem;
+}
+.version-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .7rem 0;
+  border-top: 1px solid var(--border);
+}
+.version-list dt {
+  color: var(--muted);
+}
+.version-list dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 750;
+}
+.version-actions,
+.developer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+}
+.developer-panel {
+  margin-top: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: .8rem;
+}
+.developer-panel summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: .85rem;
+}
+.developer-actions {
+  margin-top: .75rem;
+}

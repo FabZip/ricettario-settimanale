@@ -1,0 +1,11 @@
+{
+  "app_version": "1.1.0",
+  "cache_version": "v5",
+  "updated_at": "2026-07-12T15:45:00+02:00",
+  "changes": [
+    "Versione applicazione visibile nel footer.",
+    "Finestra informazioni con versione app, database e cache.",
+    "Pulsante per controllare gli aggiornamenti del database.",
+    "Pulsante per aggiornare forzatamente l'app e svuotare la cache."
+  ]
+}

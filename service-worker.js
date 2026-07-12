@@ -1,7 +1,7 @@
-const CACHE = "ricettario-antireflusso-v4";
+const CACHE = "ricettario-antireflusso-v5";
 const ASSETS = [
   "./", "./index.html", "./styles.css", "./app.js",
-  "./manifest.webmanifest", "./icons/icon.svg", "./data/recipes.json"
+  "./manifest.webmanifest", "./icons/icon.svg", "./data/recipes.json", "./app-version.json"
 ];
 
 self.addEventListener("install", event => {

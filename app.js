@@ -10,6 +10,13 @@ const state = {
 
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
+const APP_VERSION = "1.1.0";
+const APP_CACHE_VERSION = "v5";
+let currentDatabaseMeta = {version: 0, updated_at: null};
+let versionBadgeTapCount = 0;
+let versionBadgeTapTimer = null;
+
+
 const $ = (id) => document.getElementById(id);
 
 function isoWeekInfo(d = new Date()) {
@@ -560,10 +567,31 @@ async function loadLocalDatabase() {
 }
 
 function renderDatabaseStatus(meta = {}) {
-  $("dbVersion").textContent = `Versione locale: ${meta.version ?? 0}`;
-  $("dbUpdatedAt").textContent = meta.updated_at
-    ? `Aggiornata: ${new Date(meta.updated_at).toLocaleString("it-IT")}`
+  currentDatabaseMeta = {
+    version: meta.version ?? 0,
+    updated_at: meta.updated_at || null
+  };
+
+  $("dbVersion").textContent = `Versione locale: ${currentDatabaseMeta.version}`;
+  $("dbUpdatedAt").textContent = currentDatabaseMeta.updated_at
+    ? `Aggiornata: ${new Date(currentDatabaseMeta.updated_at).toLocaleString("it-IT")}`
     : "Database iniziale incluso nell'app";
+
+  renderVersionInformation();
+}
+
+function renderVersionInformation(statusText = "Pronto") {
+  const dbVersion = currentDatabaseMeta.version ?? 0;
+  const updatedText = currentDatabaseMeta.updated_at
+    ? new Date(currentDatabaseMeta.updated_at).toLocaleString("it-IT")
+    : "Database iniziale incluso";
+
+  $("appVersionBadge").textContent = `App ${APP_VERSION} · DB ${dbVersion}`;
+  $("infoAppVersion").textContent = APP_VERSION;
+  $("infoDbVersion").textContent = String(dbVersion);
+  $("infoCacheVersion").textContent = APP_CACHE_VERSION;
+  $("infoDbUpdatedAt").textContent = updatedText;
+  $("infoUpdateStatus").textContent = statusText;
 }
 
 function showUpdateMessage(message, error = false) {
@@ -596,6 +624,7 @@ async function checkDatabaseUpdates({silent=false, force=false} = {}) {
 
     if (!force && Number(remote.version) <= Number(local.version || 0)) {
       if (!silent) showUpdateMessage("Il database è già aggiornato.");
+      renderVersionInformation("Database aggiornato");
       renderDatabaseStatus(local);
       return;
     }
@@ -625,9 +654,72 @@ async function checkDatabaseUpdates({silent=false, force=false} = {}) {
     } catch (_) {}
 
     showUpdateMessage(`Database aggiornato alla versione ${remote.version}.${details}`);
+    renderVersionInformation("Database aggiornato");
   } catch (e) {
     if (!silent) showUpdateMessage(`Aggiornamento non riuscito: ${e.message}. Rimane attiva la versione locale.`, true);
+    renderVersionInformation("Errore aggiornamento");
   }
+}
+
+function openVersionDialog() {
+  renderVersionInformation();
+  $("versionDialog").showModal();
+}
+
+async function forceApplicationRefresh() {
+  $("infoUpdateStatus").textContent = "Aggiornamento app in corso…";
+
+  try {
+    if ("serviceWorker" in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(registration => registration.update()));
+    }
+
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(key => caches.delete(key)));
+    }
+
+    window.location.reload();
+  } catch (error) {
+    $("infoUpdateStatus").textContent = "Aggiornamento app non riuscito";
+  }
+}
+
+async function clearApplicationCache() {
+  if (!("caches" in window)) {
+    $("infoUpdateStatus").textContent = "Cache API non disponibile";
+    return;
+  }
+
+  const keys = await caches.keys();
+  await Promise.all(keys.map(key => caches.delete(key)));
+  $("infoUpdateStatus").textContent = "Cache svuotata: riapri l'app";
+}
+
+function clearSavedMenus() {
+  Object.keys(localStorage)
+    .filter(key => key.startsWith("menu:") || key.startsWith("shoppingChecks:"))
+    .forEach(key => localStorage.removeItem(key));
+
+  generateMenu(true);
+  $("infoUpdateStatus").textContent = "Menu e lista della spesa rigenerati";
+}
+
+function handleVersionBadgeTap() {
+  versionBadgeTapCount += 1;
+  clearTimeout(versionBadgeTapTimer);
+
+  versionBadgeTapTimer = setTimeout(() => {
+    versionBadgeTapCount = 0;
+  }, 1800);
+
+  if (versionBadgeTapCount >= 5) {
+    $("developerPanel").open = true;
+    versionBadgeTapCount = 0;
+  }
+
+  openVersionDialog();
 }
 
 async function init() {
@@ -664,6 +756,18 @@ async function init() {
 
   $("regenerateBtn").addEventListener("click", () => generateMenu(true));
   $("checkUpdatesBtn").addEventListener("click", () => checkDatabaseUpdates({force:true}));
+  $("appVersionBadge").addEventListener("click", handleVersionBadgeTap);
+  $("closeVersionDialog").addEventListener("click", () => $("versionDialog").close());
+  $("versionDialog").addEventListener("click", event => {
+    if (event.target === $("versionDialog")) $("versionDialog").close();
+  });
+  $("infoCheckUpdatesBtn").addEventListener("click", async () => {
+    $("infoUpdateStatus").textContent = "Controllo aggiornamenti…";
+    await checkDatabaseUpdates({force:true});
+  });
+  $("forceAppRefreshBtn").addEventListener("click", forceApplicationRefresh);
+  $("clearAppCacheBtn").addEventListener("click", clearApplicationCache);
+  $("clearSavedMenuBtn").addEventListener("click", clearSavedMenus);
   $("ingredientSearch").addEventListener("input", renderRecipeResults);
   $("mealFilter").addEventListener("change", renderRecipeResults);
   $("categoryFilter").addEventListener("change", renderRecipeResults);

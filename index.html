@@ -133,7 +133,55 @@
 
   <footer>
     <p>Le indicazioni del gastroenterologo prevalgono sempre sul ricettario originale.</p>
+    <button id="appVersionBadge" class="version-badge" type="button"
+            aria-label="Apri informazioni sulla versione">
+      App 1.1.0 · DB —
+    </button>
   </footer>
+
+  <dialog id="versionDialog" class="version-dialog">
+    <button id="closeVersionDialog" class="dialog-close" aria-label="Chiudi">×</button>
+    <div class="version-dialog-content">
+      <p class="eyebrow version-eyebrow">Informazioni</p>
+      <h2>Ricettario settimanale</h2>
+
+      <dl class="version-list">
+        <div>
+          <dt>Versione app</dt>
+          <dd id="infoAppVersion">1.1.0</dd>
+        </div>
+        <div>
+          <dt>Versione database</dt>
+          <dd id="infoDbVersion">—</dd>
+        </div>
+        <div>
+          <dt>Cache</dt>
+          <dd id="infoCacheVersion">v5</dd>
+        </div>
+        <div>
+          <dt>Ultimo aggiornamento database</dt>
+          <dd id="infoDbUpdatedAt">—</dd>
+        </div>
+        <div>
+          <dt>Stato</dt>
+          <dd id="infoUpdateStatus">Pronto</dd>
+        </div>
+      </dl>
+
+      <div class="version-actions">
+        <button id="infoCheckUpdatesBtn">Controlla aggiornamenti</button>
+        <button id="forceAppRefreshBtn" class="secondary">Aggiorna l'app</button>
+      </div>
+
+      <details id="developerPanel" class="developer-panel">
+        <summary>Strumenti tecnici</summary>
+        <div class="developer-actions">
+          <button id="clearAppCacheBtn" class="secondary">Svuota cache app</button>
+          <button id="clearSavedMenuBtn" class="secondary">Rigenera dati menu</button>
+        </div>
+      </details>
+    </div>
+  </dialog>
 
   <script src="app.js" defer></script>
 </body>
