@@ -10,8 +10,8 @@ const state = {
 
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
-const APP_VERSION = "1.3.0";
-const APP_CACHE_VERSION = "v9";
+const APP_VERSION = "1.3.1";
+const APP_CACHE_VERSION = "v10";
 let currentDatabaseMeta = {version: 0, updated_at: null};
 let remoteStatus = null;
 let remoteStatusCheckedAt = null;
