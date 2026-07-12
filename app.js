@@ -10,8 +10,8 @@ const state = {
 
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
-const APP_VERSION = "1.2.1";
-const APP_CACHE_VERSION = "v8";
+const APP_VERSION = "1.3.0";
+const APP_CACHE_VERSION = "v9";
 let currentDatabaseMeta = {version: 0, updated_at: null};
 let remoteStatus = null;
 let remoteStatusCheckedAt = null;
@@ -589,9 +589,9 @@ function renderDatabaseStatus(meta = {}) {
     updated_at: meta.updated_at || null
   };
 
-  $("dbVersion").textContent = `Versione locale: ${currentDatabaseMeta.version}`;
+  $("dbVersion").textContent = String(currentDatabaseMeta.version);
   $("dbUpdatedAt").textContent = currentDatabaseMeta.updated_at
-    ? `Aggiornata: ${new Date(currentDatabaseMeta.updated_at).toLocaleString("it-IT")}`
+    ? new Date(currentDatabaseMeta.updated_at).toLocaleString("it-IT")
     : "Database iniziale incluso nell'app";
 
   renderVersionInformation();
@@ -922,7 +922,6 @@ async function init() {
   });
 
   $("regenerateBtn").addEventListener("click", () => generateMenu(true));
-  $("checkUpdatesBtn").addEventListener("click", () => checkDatabaseUpdates({force:true}));
   $("appVersionBadge").addEventListener("click", handleVersionBadgeTap);
   $("closeVersionDialog").addEventListener("click", () => $("versionDialog").close());
   $("versionDialog").addEventListener("click", event => {

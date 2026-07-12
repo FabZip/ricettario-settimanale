@@ -345,3 +345,25 @@ footer {
     flex-direction: column;
   }
 }
+
+.options-settings-card {
+  margin-top: 0;
+  position: static;
+}
+.options-info-card {
+  margin-top: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: 1rem;
+}
+.options-info-card h3 {
+  margin-top: 0;
+}
+.compact-version-list {
+  margin-bottom: .5rem;
+}
+.options-note {
+  margin: .7rem 0 0;
+}
