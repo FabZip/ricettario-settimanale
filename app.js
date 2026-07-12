@@ -10,8 +10,8 @@ const state = {
 
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
-const APP_VERSION = "1.1.0";
-const APP_CACHE_VERSION = "v5";
+const APP_VERSION = "1.1.1";
+const APP_CACHE_VERSION = "v6";
 let currentDatabaseMeta = {version: 0, updated_at: null};
 let versionBadgeTapCount = 0;
 let versionBadgeTapTimer = null;
@@ -410,12 +410,27 @@ function buildRecipeShareText(recipe) {
 
   const parts = [
     recipeTitle(recipe),
-    "",
+    ""
+  ];
+
+  // La descrizione originale viene condivisa esclusivamente
+  // quando è attiva la modalità originale.
+  if (
+    state.mode === "original" &&
+    typeof recipe.descrizione_originale === "string" &&
+    recipe.descrizione_originale.trim()
+  ) {
+    parts.push("Descrizione:");
+    parts.push(recipe.descrizione_originale.trim());
+    parts.push("");
+  }
+
+  parts.push(
     `Categoria: ${recipe.categoria}`,
     `Tempo: ${recipe.tempo} minuti`,
     `Persone: ${state.portions}`,
     ""
-  ];
+  );
 
   if (state.mode === "adapted" && Array.isArray(recipe.modifiche) && recipe.modifiche.length) {
     parts.push("Variazioni rispetto all'originale:");
