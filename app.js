@@ -9,9 +9,10 @@ const state = {
 };
 
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
+const INVENTORY_STORAGE_KEY = "frigoDispensaItems";
 
-const APP_VERSION = "1.3.1";
-const APP_CACHE_VERSION = "v10";
+const APP_VERSION = "1.4.0";
+const APP_CACHE_VERSION = "v11";
 let currentDatabaseMeta = {version: 0, updated_at: null};
 let remoteStatus = null;
 let remoteStatusCheckedAt = null;
@@ -276,10 +277,14 @@ function shoppingChecksKey() {
 
 function renderShopping() {
   if (!state.menu) return;
+
   const items = buildShoppingList();
   const checks = new Set(JSON.parse(localStorage.getItem(shoppingChecksKey()) || "[]"));
   const groups = {};
-  for (const item of items) (groups[item.category] ||= []).push(item);
+
+  for (const item of items) {
+    (groups[item.category] ||= []).push(item);
+  }
 
   $("shoppingList").innerHTML = Object.entries(groups).map(([category, rows]) => `
     <section class="shopping-group">
@@ -293,6 +298,18 @@ function renderShopping() {
     </section>
   `).join("");
 
+  const purchasedCount = items.filter(item => checks.has(item.id)).length;
+  const missingCount = Math.max(items.length - purchasedCount, 0);
+
+  $("shoppingProgress").textContent = items.length
+    ? `${purchasedCount} presi · ${missingCount} ancora da prendere`
+    : "La lista della spesa è vuota.";
+
+  $("organizePurchasedBtn").disabled = purchasedCount === 0;
+  $("organizePurchasedBtn").textContent = purchasedCount
+    ? `Sistema acquistati (${purchasedCount})`
+    : "Sistema acquistati";
+
   document.querySelectorAll("[data-shopping-id]").forEach(input => {
     input.addEventListener("change", () => {
       const active = new Set(JSON.parse(localStorage.getItem(shoppingChecksKey()) || "[]"));
@@ -300,6 +317,284 @@ function renderShopping() {
       localStorage.setItem(shoppingChecksKey(), JSON.stringify([...active]));
       renderShopping();
     });
+  });
+}
+
+
+function getInventoryItems() {
+  try {
+    const items = JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY) || "[]");
+    return Array.isArray(items) ? items : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveInventoryItems(items) {
+  localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(items));
+}
+
+function stripIngredientQuantity(value = "") {
+  return String(value)
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/^\s*\d+(?:[.,]\d+)?\s*(?:g|kg|ml|cl|l|pz|pezzi?|fette?|cucchiai?|cucchiaini?)?\s*/i, "")
+    .replace(/\b(?:q\.?b\.?|quanto basta)\b/gi, " ")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function inventoryItemKey(item) {
+  return stripIngredientQuantity(item.text || item.name || item.id);
+}
+
+function inferStorageLocation(item) {
+  const value = `${item.text || ""} ${item.category || ""}`.toLowerCase();
+
+  if (
+    /(carne|pollo|tacchino|manzo|vitello|pesce|merluzzo|orata|sogliola|uov|bresaola|prosciutto|latte|yogurt|ricotta|formaggio|latticin|zucchin|carot|spinac|bieta|finocch|valeriana|fiori di zucca|verdura)/.test(value)
+  ) {
+    return "frigo";
+  }
+
+  return "dispensa";
+}
+
+function getCheckedShoppingItems() {
+  const checks = new Set(JSON.parse(localStorage.getItem(shoppingChecksKey()) || "[]"));
+  return buildShoppingList().filter(item => checks.has(item.id));
+}
+
+function openStorageDialog() {
+  const items = getCheckedShoppingItems();
+  if (!items.length) {
+    showUpdateMessage("Segna prima i prodotti acquistati.");
+    return;
+  }
+
+  $("storageAssignmentList").innerHTML = items.map(item => `
+    <label class="storage-assignment-row">
+      <span>${escapeHtml(item.text)}</span>
+      <select data-storage-item="${escapeAttr(item.id)}">
+        <option value="frigo" ${inferStorageLocation(item) === "frigo" ? "selected" : ""}>Frigo</option>
+        <option value="dispensa" ${inferStorageLocation(item) === "dispensa" ? "selected" : ""}>Dispensa</option>
+      </select>
+    </label>
+  `).join("");
+
+  $("storageDialog").showModal();
+}
+
+function confirmStorageAssignments() {
+  const purchased = getCheckedShoppingItems();
+  if (!purchased.length) {
+    $("storageDialog").close();
+    return;
+  }
+
+  const selections = new Map(
+    [...document.querySelectorAll("[data-storage-item]")]
+      .map(select => [select.dataset.storageItem, select.value])
+  );
+
+  const inventory = getInventoryItems();
+  const now = new Date().toISOString();
+
+  for (const item of purchased) {
+    const location = selections.get(item.id) || inferStorageLocation(item);
+    const key = inventoryItemKey(item);
+    const existing = inventory.find(entry => inventoryItemKey(entry) === key);
+
+    if (existing) {
+      existing.text = item.text;
+      existing.category = item.category;
+      existing.location = location;
+      existing.updatedAt = now;
+    } else {
+      inventory.push({
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        sourceId: item.id,
+        text: item.text,
+        category: item.category,
+        location,
+        addedAt: now,
+        updatedAt: now
+      });
+    }
+  }
+
+  saveInventoryItems(inventory);
+
+  const activeChecks = new Set(JSON.parse(localStorage.getItem(shoppingChecksKey()) || "[]"));
+  purchased.forEach(item => activeChecks.delete(item.id));
+  localStorage.setItem(shoppingChecksKey(), JSON.stringify([...activeChecks]));
+
+  $("storageDialog").close();
+  renderShopping();
+  renderInventory();
+  showUpdateMessage(`${purchased.length} prodotti spostati in FrigoDispensa.`);
+}
+
+function removeInventoryItem(id) {
+  const items = getInventoryItems().filter(item => item.id !== id);
+  saveInventoryItems(items);
+  renderInventory();
+}
+
+function updateInventoryLocation(id, location) {
+  const items = getInventoryItems();
+  const item = items.find(entry => entry.id === id);
+  if (!item) return;
+
+  item.location = location;
+  item.updatedAt = new Date().toISOString();
+  saveInventoryItems(items);
+  renderInventory();
+}
+
+function renderInventory() {
+  const query = $("inventorySearch")?.value.toLowerCase().trim() || "";
+  const location = $("inventoryLocationFilter")?.value || "";
+
+  const items = getInventoryItems()
+    .filter(item => !location || item.location === location)
+    .filter(item => !query || `${item.text} ${item.category}`.toLowerCase().includes(query))
+    .sort((a, b) => a.location.localeCompare(b.location) || a.text.localeCompare(b.text));
+
+  const total = getInventoryItems().length;
+  const fridgeCount = getInventoryItems().filter(item => item.location === "frigo").length;
+  const pantryCount = total - fridgeCount;
+
+  $("inventoryCount").textContent = `${total} prodotti totali · ${fridgeCount} in frigo · ${pantryCount} in dispensa`;
+
+  $("inventoryList").innerHTML = items.length
+    ? items.map(item => `
+        <article class="inventory-card">
+          <h3>${escapeHtml(item.text)}</h3>
+          <div class="recipe-meta">
+            <span class="badge">${item.location === "frigo" ? "Frigo" : "Dispensa"}</span>
+            <span class="badge">${escapeHtml(item.category || "Altro")}</span>
+          </div>
+          <div class="inventory-card-actions">
+            <select data-inventory-location="${escapeAttr(item.id)}" aria-label="Posizione di conservazione">
+              <option value="frigo" ${item.location === "frigo" ? "selected" : ""}>Frigo</option>
+              <option value="dispensa" ${item.location === "dispensa" ? "selected" : ""}>Dispensa</option>
+            </select>
+            <button class="secondary" data-remove-inventory="${escapeAttr(item.id)}">Rimuovi</button>
+          </div>
+        </article>
+      `).join("")
+    : `<p class="muted">Nessun prodotto corrisponde ai filtri selezionati.</p>`;
+
+  document.querySelectorAll("[data-inventory-location]").forEach(select => {
+    select.addEventListener("change", () => {
+      updateInventoryLocation(select.dataset.inventoryLocation, select.value);
+    });
+  });
+
+  document.querySelectorAll("[data-remove-inventory]").forEach(button => {
+    button.addEventListener("click", () => removeInventoryItem(button.dataset.removeInventory));
+  });
+}
+
+const RECIPE_ESSENTIAL_WORDS = new Set([
+  "acqua", "sale", "olio", "evo", "extravergine", "brodo",
+  "vegetale", "quanto", "basta", "qb", "pizzico"
+]);
+
+function ingredientTokens(value) {
+  return stripIngredientQuantity(value)
+    .split(" ")
+    .filter(token => token.length >= 3 && !RECIPE_ESSENTIAL_WORDS.has(token));
+}
+
+function ingredientAvailable(recipeIngredient, inventoryItems) {
+  const recipeTokens = ingredientTokens(recipeIngredient);
+  if (!recipeTokens.length) return true;
+
+  return inventoryItems.some(item => {
+    const availableTokens = ingredientTokens(item.text);
+    const availableText = stripIngredientQuantity(item.text);
+    const recipeText = stripIngredientQuantity(recipeIngredient);
+
+    if (availableText.includes(recipeText) || recipeText.includes(availableText)) {
+      return true;
+    }
+
+    return recipeTokens.some(token => availableTokens.includes(token));
+  });
+}
+
+function findRecipesFromInventory() {
+  const inventoryItems = getInventoryItems();
+
+  if (!inventoryItems.length) {
+    showUpdateMessage("FrigoDispensa è vuoto: aggiungi prima i prodotti acquistati.");
+    return;
+  }
+
+  const results = state.recipes
+    .filter(recipe => isRecipeAllowedForCurrentMode(recipe))
+    .map(recipe => {
+      const ingredients = recipeIngredients(recipe);
+      const relevant = ingredients.filter(ingredient => ingredientTokens(ingredient).length);
+      const matched = relevant.filter(ingredient => ingredientAvailable(ingredient, inventoryItems));
+      const missing = relevant.filter(ingredient => !ingredientAvailable(ingredient, inventoryItems));
+      const ratio = relevant.length ? matched.length / relevant.length : 0;
+
+      return {recipe, matched, missing, ratio};
+    })
+    .filter(result => result.matched.length > 0)
+    .sort((a, b) =>
+      Number(b.missing.length === 0) - Number(a.missing.length === 0) ||
+      b.ratio - a.ratio ||
+      b.matched.length - a.matched.length
+    )
+    .slice(0, 30);
+
+  $("inventoryRecipeSection").classList.remove("hidden");
+
+  if (!results.length) {
+    $("inventoryRecipeSummary").textContent = "Non ho trovato ricette compatibili con i prodotti presenti.";
+    $("inventoryRecipeResults").innerHTML = "";
+    return;
+  }
+
+  const completeCount = results.filter(result => result.missing.length === 0).length;
+  $("inventoryRecipeSummary").textContent = completeCount
+    ? `${completeCount} ricette complete; sotto trovi anche le migliori combinazioni parziali.`
+    : "Nessuna ricetta completa; ecco quelle con più ingredienti già disponibili.";
+
+  $("inventoryRecipeResults").innerHTML = results.map(result => {
+    const recipe = result.recipe;
+    const percentage = Math.round(result.ratio * 100);
+
+    return `
+      <article class="recipe-card">
+        <h3>${escapeHtml(recipeTitle(recipe))}</h3>
+        <div class="recipe-meta">
+          <span class="badge">${escapeHtml(recipe.categoria)}</span>
+          <span class="badge">${percentage}% disponibile</span>
+          ${result.missing.length === 0
+            ? '<span class="badge">Completa</span>'
+            : `<span class="badge warn">Mancano ${result.missing.length}</span>`}
+        </div>
+        <div class="inventory-match">
+          ${result.matched.length} ingredienti disponibili su ${result.matched.length + result.missing.length}
+        </div>
+        ${result.missing.length
+          ? `<p class="inventory-missing"><strong>Mancano:</strong> ${escapeHtml(result.missing.slice(0, 4).join(", "))}${result.missing.length > 4 ? "…" : ""}</p>`
+          : ""}
+        <div class="recipe-actions">
+          <button data-open-inventory-recipe="${recipe.id}">Apri ricetta</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  document.querySelectorAll("[data-open-inventory-recipe]").forEach(button => {
+    button.addEventListener("click", () => openRecipe(Number(button.dataset.openInventoryRecipe)));
   });
 }
 
@@ -904,6 +1199,7 @@ async function init() {
   generateMenu();
   renderRecipeResults();
   renderFavorites();
+  renderInventory();
 
   $("bookMode").addEventListener("change", e => {
     state.mode = e.target.value;
@@ -912,6 +1208,8 @@ async function init() {
     generateMenu();
     renderRecipeResults();
     renderFavorites();
+    renderInventory();
+    $("inventoryRecipeSection").classList.add("hidden");
   });
 
   $("portions").addEventListener("change", e => {
@@ -943,6 +1241,19 @@ async function init() {
   $("categoryFilter").addEventListener("change", renderRecipeResults);
   $("compatibleOnly").addEventListener("change", renderRecipeResults);
   $("shareShoppingBtn").addEventListener("click", shareShopping);
+  $("organizePurchasedBtn").addEventListener("click", openStorageDialog);
+  $("closeStorageDialog").addEventListener("click", () => $("storageDialog").close());
+  $("cancelStorageBtn").addEventListener("click", () => $("storageDialog").close());
+  $("confirmStorageBtn").addEventListener("click", confirmStorageAssignments);
+  $("storageDialog").addEventListener("click", event => {
+    if (event.target === $("storageDialog")) $("storageDialog").close();
+  });
+  $("inventorySearch").addEventListener("input", renderInventory);
+  $("inventoryLocationFilter").addEventListener("change", renderInventory);
+  $("findInventoryRecipesBtn").addEventListener("click", findRecipesFromInventory);
+  $("closeInventoryRecipesBtn").addEventListener("click", () => {
+    $("inventoryRecipeSection").classList.add("hidden");
+  });
   $("closeDialog").addEventListener("click", () => $("recipeDialog").close());
   $("recipeDialog").addEventListener("click", e => {
     if (e.target === $("recipeDialog")) $("recipeDialog").close();

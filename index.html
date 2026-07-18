@@ -7,7 +7,7 @@
   <meta name="description" content="Ricettario antireflusso offline con menu settimanale e lista della spesa.">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=1.3.1">
+  <link rel="stylesheet" href="styles.css?v=1.4.0">
   <title>Ricettario antireflusso</title>
 </head>
 <body>
@@ -39,6 +39,7 @@
       <button class="tab" data-tab="shopping">Spesa</button>
       <button class="tab" data-tab="recipes">Ricette</button>
       <button class="tab" data-tab="favorites">Preferiti</button>
+      <button class="tab" data-tab="inventory">FrigoDispensa</button>
       <button class="tab" data-tab="options">Opzioni</button>
     </nav>
 
@@ -64,7 +65,9 @@
       <div class="shopping-actions">
         <button id="checkAllBtn" class="secondary">Segna tutto</button>
         <button id="clearChecksBtn" class="secondary">Azzera spunte</button>
+        <button id="organizePurchasedBtn" disabled>Sistema acquistati</button>
       </div>
+      <p id="shoppingProgress" class="shopping-progress muted"></p>
       <div id="shoppingList" class="shopping-list"></div>
     </section>
 
@@ -105,6 +108,40 @@
       </div>
       <div id="favoriteResults" class="recipe-grid"></div>
     </section>
+
+    <section id="inventory" class="panel">
+      <div class="section-head">
+        <div>
+          <h2>FrigoDispensa</h2>
+          <p>I prodotti acquistati e disponibili in casa.</p>
+        </div>
+        <button id="findInventoryRecipesBtn">Cerca Ricetta</button>
+      </div>
+
+      <div class="inventory-toolbar">
+        <input id="inventorySearch" type="search" placeholder="Cerca un prodotto">
+        <select id="inventoryLocationFilter">
+          <option value="">Frigo e dispensa</option>
+          <option value="frigo">Solo frigo</option>
+          <option value="dispensa">Solo dispensa</option>
+        </select>
+      </div>
+
+      <p id="inventoryCount" class="muted"></p>
+      <div id="inventoryList" class="inventory-grid"></div>
+
+      <section id="inventoryRecipeSection" class="inventory-recipes hidden">
+        <div class="section-head">
+          <div>
+            <h2>Ricette con i prodotti disponibili</h2>
+            <p id="inventoryRecipeSummary"></p>
+          </div>
+          <button id="closeInventoryRecipesBtn" class="secondary">Chiudi risultati</button>
+        </div>
+        <div id="inventoryRecipeResults" class="recipe-grid"></div>
+      </section>
+    </section>
+
     <section id="options" class="panel">
       <div class="section-head">
         <div>
@@ -142,7 +179,7 @@
         <dl class="version-list compact-version-list">
           <div>
             <dt>App</dt>
-            <dd>1.3.0</dd>
+            <dd>1.4.0</dd>
           </div>
           <div>
             <dt>Database locale</dt>
@@ -154,7 +191,7 @@
           </div>
           <div>
             <dt>Cache</dt>
-            <dd>v9</dd>
+            <dd>v11</dd>
           </div>
         </dl>
         <p class="muted options-note">
@@ -165,6 +202,21 @@
 
   </main>
 
+
+  <dialog id="storageDialog" class="storage-dialog">
+    <button id="closeStorageDialog" class="dialog-close" aria-label="Chiudi">×</button>
+    <div class="storage-dialog-content">
+      <p class="eyebrow version-eyebrow">Fine della spesa</p>
+      <h2>Sistema i prodotti acquistati</h2>
+      <p class="muted">Indica dove conserverai ciascun prodotto.</p>
+      <div id="storageAssignmentList" class="storage-assignment-list"></div>
+      <div class="storage-dialog-actions">
+        <button id="confirmStorageBtn">Sposta in FrigoDispensa</button>
+        <button id="cancelStorageBtn" class="secondary">Annulla</button>
+      </div>
+    </div>
+  </dialog>
+
   <dialog id="recipeDialog">
     <button id="closeDialog" class="dialog-close" aria-label="Chiudi">×</button>
     <div id="recipeDetail"></div>
@@ -174,7 +226,7 @@
     <p>Le indicazioni del gastroenterologo prevalgono sempre sul ricettario originale.</p>
     <button id="appVersionBadge" class="version-badge" type="button"
             aria-label="Apri informazioni sulla versione">
-      App 1.1.0 · DB —
+      App 1.4.0 · DB —
     </button>
   </footer>
 
@@ -187,7 +239,7 @@
       <dl class="version-list">
         <div>
           <dt>Versione app locale</dt>
-          <dd id="infoAppVersion">1.2.0</dd>
+          <dd id="infoAppVersion">1.4.0</dd>
         </div>
         <div>
           <dt>Versione app remota</dt>
@@ -203,7 +255,7 @@
         </div>
         <div>
           <dt>Cache</dt>
-          <dd id="infoCacheVersion">v7</dd>
+          <dd id="infoCacheVersion">v11</dd>
         </div>
         <div>
           <dt>Ultimo aggiornamento database</dt>
@@ -231,6 +283,6 @@
     </div>
   </dialog>
 
-  <script src="app.js?v=1.3.1" defer></script>
+  <script src="app.js?v=1.4.0" defer></script>
 </body>
 </html>

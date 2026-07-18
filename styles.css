@@ -367,3 +367,107 @@ footer {
 .options-note {
   margin: .7rem 0 0;
 }
+
+
+.shopping-progress {
+  margin: -.2rem 0 .8rem;
+  font-weight: 650;
+}
+.shopping-actions button:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+.inventory-toolbar {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: .7rem;
+  margin-bottom: .7rem;
+}
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+  gap: .8rem;
+}
+.inventory-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 1rem;
+}
+.inventory-card h3 {
+  margin: 0 0 .65rem;
+  line-height: 1.35;
+  font-size: 1rem;
+}
+.inventory-card-actions {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-top: .75rem;
+}
+.inventory-card-actions select {
+  flex: 1;
+}
+.inventory-card-actions button {
+  padding: .65rem .75rem;
+}
+.inventory-recipes {
+  margin-top: 1.4rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.storage-dialog {
+  width: min(680px, calc(100% - 1rem));
+}
+.storage-dialog-content {
+  padding: 1.25rem;
+}
+.storage-dialog-content h2 {
+  padding-right: 3rem;
+}
+.storage-assignment-list {
+  display: grid;
+  gap: .6rem;
+  margin: 1rem 0;
+  max-height: 52vh;
+  overflow: auto;
+}
+.storage-assignment-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  align-items: center;
+  gap: .7rem;
+  padding: .75rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+}
+.storage-assignment-row span {
+  line-height: 1.35;
+}
+.storage-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+}
+.inventory-match {
+  margin: .65rem 0;
+  padding: .65rem;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--primary-strong);
+  font-size: .86rem;
+}
+.inventory-missing {
+  margin: .45rem 0 0;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.4;
+}
+@media (max-width: 720px) {
+  .inventory-toolbar,
+  .storage-assignment-row {
+    grid-template-columns: 1fr;
+  }
+}
