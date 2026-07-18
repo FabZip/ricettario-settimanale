@@ -1,8 +1,11 @@
 {
-  "app_version": "1.4.0",
-  "cache_version": "v11",
-  "updated_at": "2026-07-18T11:30:00+02:00",
+  "app_version": "1.4.3",
+  "cache_version": "v14",
+  "updated_at": "2026-07-18T13:30:00+02:00",
   "changes": [
+    "Cerca Ricette apre una pagina interna dedicata con freccia per tornare a FrigoDispensa.",
+    "I check della lista spesa restano attivi dopo la conservazione; aggiunti indicatori frigo/dispensa.",
+    "Aggiunta manuale e vocale di prodotti alla lista della spesa.",
     "Aggiunta FrigoDispensa con archiviazione degli acquisti e ricerca ricette dagli ingredienti disponibili.",
     "Corretta la cache su smartphone: HTML, JavaScript e CSS vengono aggiornati in modo coerente.",
     "Spostate le impostazioni nella nuova tab Opzioni e rimosso il controllo aggiornamenti duplicato.",

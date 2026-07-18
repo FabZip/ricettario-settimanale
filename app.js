@@ -11,8 +11,8 @@ const state = {
 const DAYS = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 const INVENTORY_STORAGE_KEY = "frigoDispensaItems";
 
-const APP_VERSION = "1.4.0";
-const APP_CACHE_VERSION = "v11";
+const APP_VERSION = "1.4.3";
+const APP_CACHE_VERSION = "v14";
 let currentDatabaseMeta = {version: 0, updated_at: null};
 let remoteStatus = null;
 let remoteStatusCheckedAt = null;
@@ -231,6 +231,130 @@ function normalizeIngredient(line) {
     .trim();
 }
 
+
+function manualShoppingKey() {
+  return `manualShopping:${weekKey()}`;
+}
+
+function getManualShoppingItems() {
+  try {
+    const items = JSON.parse(localStorage.getItem(manualShoppingKey()) || "[]");
+    return Array.isArray(items) ? items : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveManualShoppingItems(items) {
+  localStorage.setItem(manualShoppingKey(), JSON.stringify(items));
+}
+
+function normalizeManualShoppingText(value) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function addManualShoppingItem(value) {
+  const text = normalizeManualShoppingText(value);
+
+  if (!text) {
+    $("voiceShoppingStatus").textContent = "Scrivi o pronuncia un prodotto.";
+    $("manualShoppingInput").focus();
+    return;
+  }
+
+  const items = getManualShoppingItems();
+  items.push({
+    id: `manual:${Date.now()}:${Math.random().toString(16).slice(2)}`,
+    text,
+    category: shoppingCategory(text),
+    manual: true
+  });
+
+  saveManualShoppingItems(items);
+  $("manualShoppingInput").value = "";
+  $("voiceShoppingStatus").textContent = `Aggiunto: ${text}`;
+  renderShopping();
+}
+
+function removeManualShoppingItem(id) {
+  saveManualShoppingItems(
+    getManualShoppingItems().filter(item => item.id !== id)
+  );
+
+  const checks = new Set(JSON.parse(localStorage.getItem(shoppingChecksKey()) || "[]"));
+  checks.delete(id);
+  localStorage.setItem(shoppingChecksKey(), JSON.stringify([...checks]));
+  renderShopping();
+}
+
+let shoppingSpeechRecognition = null;
+
+function startShoppingVoiceInput() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    $("voiceShoppingStatus").textContent =
+      "Il riconoscimento vocale non è supportato da questo browser. Usa il campo testuale.";
+    return;
+  }
+
+  if (shoppingSpeechRecognition) {
+    shoppingSpeechRecognition.abort();
+  }
+
+  shoppingSpeechRecognition = new SpeechRecognition();
+  shoppingSpeechRecognition.lang = "it-IT";
+  shoppingSpeechRecognition.interimResults = false;
+  shoppingSpeechRecognition.maxAlternatives = 1;
+
+  const button = $("voiceShoppingBtn");
+  button.classList.add("is-listening");
+  button.textContent = "🎙️ Ascolto…";
+  $("voiceShoppingStatus").textContent = "Parla ora, ad esempio: 6 uova.";
+
+  shoppingSpeechRecognition.onresult = event => {
+    const transcript = normalizeManualShoppingText(
+      event.results?.[0]?.[0]?.transcript || ""
+    );
+
+    if (!transcript) {
+      $("voiceShoppingStatus").textContent = "Non ho riconosciuto il prodotto.";
+      return;
+    }
+
+    $("manualShoppingInput").value = transcript;
+    addManualShoppingItem(transcript);
+  };
+
+  shoppingSpeechRecognition.onerror = event => {
+    const messages = {
+      "not-allowed": "Permesso microfono negato.",
+      "service-not-allowed": "Il riconoscimento vocale non è disponibile.",
+      "no-speech": "Non ho sentito nulla. Riprova.",
+      "audio-capture": "Microfono non disponibile.",
+      "network": "Errore di rete durante il riconoscimento vocale."
+    };
+    $("voiceShoppingStatus").textContent =
+      messages[event.error] || "Non è stato possibile riconoscere la voce.";
+  };
+
+  shoppingSpeechRecognition.onend = () => {
+    button.classList.remove("is-listening");
+    button.textContent = "🎙️ Voce";
+    shoppingSpeechRecognition = null;
+  };
+
+  try {
+    shoppingSpeechRecognition.start();
+  } catch (_) {
+    button.classList.remove("is-listening");
+    button.textContent = "🎙️ Voce";
+    $("voiceShoppingStatus").textContent = "Il microfono è già in uso. Riprova.";
+  }
+}
+
 function buildShoppingList() {
   const factor = state.portions / 2;
   const numeric = new Map();
@@ -268,6 +392,7 @@ function buildShoppingList() {
   for (const line of loose) {
     items.push({id: `loose:${line}`, text: line, category: shoppingCategory(line)});
   }
+  items.push(...getManualShoppingItems());
   return items.sort((a,b) => a.category.localeCompare(b.category) || a.text.localeCompare(b.text));
 }
 
@@ -289,12 +414,29 @@ function renderShopping() {
   $("shoppingList").innerHTML = Object.entries(groups).map(([category, rows]) => `
     <section class="shopping-group">
       <h3>${escapeHtml(category)}</h3>
-      ${rows.map(row => `
-        <label class="shopping-item ${checks.has(row.id) ? "checked" : ""}">
-          <input type="checkbox" data-shopping-id="${escapeAttr(row.id)}" ${checks.has(row.id) ? "checked" : ""}>
-          <span>${escapeHtml(row.text)}</span>
-        </label>
-      `).join("")}
+      ${rows.map(row => {
+        const storageLocation = getShoppingStorageLocation(row);
+        return `
+          <div class="shopping-item-row">
+            <label class="shopping-item ${checks.has(row.id) ? "checked" : ""}">
+              <input type="checkbox" data-shopping-id="${escapeAttr(row.id)}" ${checks.has(row.id) ? "checked" : ""}>
+              <span class="shopping-item-content">
+                <span>${escapeHtml(row.text)}</span>
+                ${storageLocation
+                  ? `<span
+                      class="shopping-storage-indicator ${storageLocation}"
+                      title="${storageLocation === "frigo" ? "Conservato in frigo" : "Conservato in dispensa"}"
+                      aria-label="${storageLocation === "frigo" ? "Conservato in frigo" : "Conservato in dispensa"}"
+                    ></span>`
+                  : ""}
+              </span>
+            </label>
+            ${row.manual
+              ? `<button class="secondary remove-manual-shopping" data-remove-manual-shopping="${escapeAttr(row.id)}" aria-label="Rimuovi ${escapeAttr(row.text)}">Rimuovi</button>`
+              : ""}
+          </div>
+        `;
+      }).join("")}
     </section>
   `).join("");
 
@@ -316,6 +458,12 @@ function renderShopping() {
       input.checked ? active.add(input.dataset.shoppingId) : active.delete(input.dataset.shoppingId);
       localStorage.setItem(shoppingChecksKey(), JSON.stringify([...active]));
       renderShopping();
+    });
+  });
+
+  document.querySelectorAll("[data-remove-manual-shopping]").forEach(button => {
+    button.addEventListener("click", () => {
+      removeManualShoppingItem(button.dataset.removeManualShopping);
     });
   });
 }
@@ -359,6 +507,14 @@ function inferStorageLocation(item) {
   }
 
   return "dispensa";
+}
+
+
+function getShoppingStorageLocation(item) {
+  const inventory = getInventoryItems();
+  const key = inventoryItemKey(item);
+  const match = inventory.find(entry => inventoryItemKey(entry) === key);
+  return match?.location || null;
 }
 
 function getCheckedShoppingItems() {
@@ -426,14 +582,12 @@ function confirmStorageAssignments() {
 
   saveInventoryItems(inventory);
 
-  const activeChecks = new Set(JSON.parse(localStorage.getItem(shoppingChecksKey()) || "[]"));
-  purchased.forEach(item => activeChecks.delete(item.id));
-  localStorage.setItem(shoppingChecksKey(), JSON.stringify([...activeChecks]));
-
+  // I prodotti acquistati restano spuntati anche dopo la conservazione.
+  // L'indicatore colorato mostra se sono stati messi in frigo o in dispensa.
   $("storageDialog").close();
   renderShopping();
   renderInventory();
-  showUpdateMessage(`${purchased.length} prodotti spostati in FrigoDispensa.`);
+  showUpdateMessage(`${purchased.length} prodotti conservati in FrigoDispensa.`);
 }
 
 function removeInventoryItem(id) {
@@ -526,6 +680,27 @@ function ingredientAvailable(recipeIngredient, inventoryItems) {
   });
 }
 
+
+function openInventoryRecipePage() {
+  document.body.classList.add("subpage-open");
+  $("inventoryRecipePage").classList.remove("hidden");
+  window.scrollTo({top: 0, behavior: "smooth"});
+}
+
+function closeInventoryRecipePage() {
+  document.body.classList.remove("subpage-open");
+  $("inventoryRecipePage").classList.add("hidden");
+
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.classList.toggle("active", tab.dataset.tab === "inventory");
+  });
+  document.querySelectorAll(".panel").forEach(panel => {
+    panel.classList.toggle("active", panel.id === "inventory");
+  });
+
+  window.scrollTo({top: 0, behavior: "smooth"});
+}
+
 function findRecipesFromInventory() {
   const inventoryItems = getInventoryItems();
 
@@ -553,11 +728,13 @@ function findRecipesFromInventory() {
     )
     .slice(0, 30);
 
-  $("inventoryRecipeSection").classList.remove("hidden");
 
   if (!results.length) {
     $("inventoryRecipeSummary").textContent = "Non ho trovato ricette compatibili con i prodotti presenti.";
-    $("inventoryRecipeResults").innerHTML = "";
+    $("inventoryRecipeResults").innerHTML = `
+      <p class="muted">Prova ad aggiungere altri prodotti in FrigoDispensa.</p>
+    `;
+    openInventoryRecipePage();
     return;
   }
 
@@ -596,6 +773,8 @@ function findRecipesFromInventory() {
   document.querySelectorAll("[data-open-inventory-recipe]").forEach(button => {
     button.addEventListener("click", () => openRecipe(Number(button.dataset.openInventoryRecipe)));
   });
+
+  openInventoryRecipePage();
 }
 
 function renderRecipeResults() {
@@ -1209,7 +1388,6 @@ async function init() {
     renderRecipeResults();
     renderFavorites();
     renderInventory();
-    $("inventoryRecipeSection").classList.add("hidden");
   });
 
   $("portions").addEventListener("change", e => {
@@ -1241,6 +1419,16 @@ async function init() {
   $("categoryFilter").addEventListener("change", renderRecipeResults);
   $("compatibleOnly").addEventListener("change", renderRecipeResults);
   $("shareShoppingBtn").addEventListener("click", shareShopping);
+  $("addManualShoppingBtn").addEventListener("click", () => {
+    addManualShoppingItem($("manualShoppingInput").value);
+  });
+  $("manualShoppingInput").addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      addManualShoppingItem($("manualShoppingInput").value);
+    }
+  });
+  $("voiceShoppingBtn").addEventListener("click", startShoppingVoiceInput);
   $("organizePurchasedBtn").addEventListener("click", openStorageDialog);
   $("closeStorageDialog").addEventListener("click", () => $("storageDialog").close());
   $("cancelStorageBtn").addEventListener("click", () => $("storageDialog").close());
@@ -1251,9 +1439,7 @@ async function init() {
   $("inventorySearch").addEventListener("input", renderInventory);
   $("inventoryLocationFilter").addEventListener("change", renderInventory);
   $("findInventoryRecipesBtn").addEventListener("click", findRecipesFromInventory);
-  $("closeInventoryRecipesBtn").addEventListener("click", () => {
-    $("inventoryRecipeSection").classList.add("hidden");
-  });
+  $("backToInventoryBtn").addEventListener("click", closeInventoryRecipePage);
   $("closeDialog").addEventListener("click", () => $("recipeDialog").close());
   $("recipeDialog").addEventListener("click", e => {
     if (e.target === $("recipeDialog")) $("recipeDialog").close();

@@ -1,11 +1,11 @@
-const CACHE = "ricettario-antireflusso-v11";
-const APP_VERSION = "1.4.0";
+const CACHE = "ricettario-antireflusso-v14";
+const APP_VERSION = "1.4.3";
 
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=1.4.0",
-  "./app.js?v=1.4.0",
+  "./styles.css?v=1.4.3",
+  "./app.js?v=1.4.3",
   "./manifest.webmanifest",
   "./icons/icon.svg",
   "./data/recipes.json",
